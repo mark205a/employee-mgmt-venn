@@ -1,0 +1,29 @@
+<% include partials/header %>
+
+<v-toolbar class="light-blue darken-1" light>
+    <v-toolbar-title>
+        <%= title %>
+    </v-toolbar-title>
+    <v-btn icon light @click.native="playSound">
+        <v-icon>{{play_icon}}</v-icon>
+    </v-btn>
+    <v-btn icon light @click.native="stopSound" v-show="stop_btn">
+        <v-icon>stop</v-icon>
+    </v-btn>
+</v-toolbar>
+<main>
+    <v-container fluid>
+        <v-card>
+            <v-card-row class="grey lighten-2">
+                <v-card-title>
+                    <span class="black--text">Status of Appointment</span>
+                </v-card-title>
+            </v-card-row>
+            <v-card-text>
+                <chartjs-pie :datalabel="'Status of Appointment'" :labels="['Permanent','Contractual','Job Order']" :data="pie_status_data" v-if="pie_load"></chartjs-pie>
+            </v-card-text>
+        </v-card>
+    </v-container>
+</main>
+
+<% include partials/footer %>

@@ -1,0 +1,130 @@
+<% include partials/header %>
+
+<v-toolbar class="light-blue darken-1" light>
+    <v-toolbar-side-icon light @click.native="drawer = !drawer"></v-toolbar-side-icon>
+    <v-toolbar-title>
+        <%= title %>
+    </v-toolbar-title>
+    <v-btn icon light @click.native="playSound">
+      <v-icon >{{play_icon}}</v-icon>
+    </v-btn>
+    <v-btn icon light @click.native="stopSound" v-show="stop_btn">
+      <v-icon >stop</v-icon>
+    </v-btn>
+</v-toolbar>
+<main>
+    <v-container fluid>
+        <v-card>
+            <v-card-row class="grey lighten-2">
+                <div class="pl-3"><v-text-field v-model="search_emp" prepend-icon="search" label="Search..." hide-details single-line></v-text-field></div>
+                <v-spacer></v-spacer>
+                <div>
+                    <v-btn icon="icon" class="black--text" @click.native.stop="openEmployeeDialog('add')">
+                        <v-icon>add</v-icon>
+                    </v-btn>
+                    <v-menu bottom left origin="top right">
+                        <v-btn icon="icon" slot="activator" class="black--text">
+                            <v-icon>sort</v-icon>
+                        </v-btn>
+                        <v-list>
+                            <v-list-item v-for="(sort, index) in sort_list" v-bind:key="index">
+                                <v-list-tile @click.native="sortBy = sort.field" ripple>
+                                    <v-list-tile-title>{{sort.name}}</v-list-tile-title>
+                                </v-list-tile>
+                            </v-list-item>
+                        </v-list>
+                    </v-menu>
+                </div>
+            </v-card-row>
+            <v-card-text>
+            <v-progress-linear v-bind:indeterminate="true" v-show="progress_linear"></v-progress-linear>
+            <v-alert info v-bind:value="delete_success">
+                Employee removed.
+            </v-alert>
+                <table class="table">
+                    <tr>
+                        <th>Agency ID</th>
+                        <th>Name</th>
+                        <th>Date Registered</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                    <tr v-for="(emp, index) in orderBy(filterBy(employees, search_emp), sortBy)" v-bind:key="index">
+                        <td class="text-xs-center">{{ emp.agency_id }}</td>
+                        <td class="text-xs-center">{{ emp.name }}</td>
+                        <td class="text-xs-center">{{ emp.created_at }}</td>
+                        <td class="text-xs-center">{{ emp.status }}</td>
+                        <td class="text-xs-center">
+                            <v-btn icon="icon" class="green--text" @click.native="openEditEmployeeDialog(emp)">
+                                <v-icon>mode_edit</v-icon>
+                            </v-btn>
+                            <v-btn icon="icon" class="red--text" @click.native.stop="openDeleteDialog(emp)">
+                                <v-icon>delete_forever</v-icon>
+                            </v-btn>
+                        </td>
+                    </tr>
+                </table>
+            </v-card-text>
+        </v-card>
+        <!-- Modals -->
+        <!-- Add Modal -->
+        <v-dialog v-model="employee_add_dialog" persistent>
+            <v-card>
+                <v-card-row class="light-blue darken-1">
+                    <v-card-title class="white--text">Add Employee</v-card-title>
+                </v-card-row>
+                <v-card-row>
+                    <v-card-text>
+                        <v-alert success v-bind:value="employee_add_success">Employee Added</v-alert>
+                        <v-text-field label="Agency ID" required v-model="employee.agency_id"></v-text-field>
+                        <v-text-field label="Name" required v-model="employee.name"></v-text-field>
+                        <v-select label="Status of Appointment" required v-bind:items="status" v-model="employee.status"></v-select>
+                        <small class="red--text" v-show="form_error">*indicates required field</small>
+                    </v-card-text>
+                </v-card-row>
+                <v-card-row actions>
+                    <v-btn class="grey--text " flat @click.native="closeEmployeeAddDialog">Cancel</v-btn>
+                    <v-btn class="light-blue--text text--darken-1" flat @click.native="addEmployee">Save</v-btn>
+                </v-card-row>
+            </v-card>
+        </v-dialog>
+        <!-- Edit Modal -->
+        <v-dialog v-model="employee_edit_dialog" persistent>
+            <v-card>
+                <v-card-row class="light-blue darken-1">
+                    <v-card-title class="white--text">Update Employee</v-card-title>
+                </v-card-row>
+                <v-card-row>
+                    <v-card-text>
+                        <v-alert success v-bind:value="employee_update_success">Employee Updated</v-alert>
+                        <v-text-field label="Agency ID" required v-model="employee_edit.agency_id"></v-text-field>
+                        <v-text-field label="Name" required v-model="employee_edit.name"></v-text-field>
+                        <v-select label="Status of Appointment" required v-bind:items="status" v-model="employee_edit.status"></v-select>
+                        <small class="red--text" v-show="form_error">*indicates required field</small>
+                    </v-card-text>
+                </v-card-row>
+                <v-card-row actions>
+                    <v-btn class="grey--text " flat @click.native="closeEmployeeEditDialog">Cancel</v-btn>
+                    <v-btn class="light-blue--text text--darken-1" flat @click.native="updateEmployee">Save</v-btn>
+                </v-card-row>
+            </v-card>
+        </v-dialog>
+        <!-- DELETE MODAL -->
+        <v-dialog v-model="delete_dialog">
+            <v-card>
+                <v-card-row>
+                    <v-card-title>Are you sure?</v-card-title>
+                </v-card-row>
+                <v-card-row>
+                    <v-card-text>Removing will erase the employee data and cannot be reveresed.</v-card-text>
+                </v-card-row>
+                <v-card-row actions>
+                    <v-btn class="grey--text " flat @click.native="cancelRemove">No</v-btn>
+                    <v-btn class="red--text" flat="flat" @click.native="removeUser(selected_employee)">Yes</v-btn>
+                </v-card-row>
+            </v-card>
+        </v-dialog>
+    </v-container>
+</main>
+
+<% include partials/footer %>
